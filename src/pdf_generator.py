@@ -59,14 +59,14 @@ def genereer_pdf(template_data: dict) -> bytes:
     Returns PDF als bytes.
     Raises Exception als het mislukt.
     """
-    # Comprimeer afbeeldingen per tier vóór rendering
+    # Comprimeer alle afbeeldingen per tier vóór rendering
     for cat in ["tech_artikelen", "nationaal_artikelen", "internationaal_artikelen"]:
         for artikel in template_data.get(cat, []):
-            pad = artikel.get("afbeelding_pad")
-            if pad and os.path.exists(pad):
-                artikel["afbeelding_pad"] = comprimeer_afbeelding(
-                    pad, artikel.get("tier", "compact")
-                )
+            tier = artikel.get("tier", "compact")
+            paden = artikel.get("afbeelding_paden", [])
+            artikel["afbeelding_paden"] = [
+                comprimeer_afbeelding(p, tier) for p in paden if os.path.exists(p)
+            ]
 
     html_content = render_html(template_data)
 

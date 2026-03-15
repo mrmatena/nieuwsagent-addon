@@ -7,12 +7,12 @@
 {% macro samenvatting(artikel) %}{%- if artikel.samenvatting_nl -%}{{ artikel.samenvatting_nl }}{%- else -%}{{ artikel.samenvatting }}{%- endif -%}{% endmacro %}
 {% macro pijl(kleur) %}{%- if kleur == 'groen' -%}▲{%- elif kleur == 'rood' -%}▼{%- else -%}◆{%- endif -%}{% endmacro %}
 
-{% macro foto(artikel, hoogte) %}
-  {% if artikel.afbeelding_pad %}
-    <div class="foto-wrapper" style="height:{{ hoogte }}"><img src="file://{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" /></div>
-  {% else %}
-    <div class="foto-placeholder" style="height:{{ hoogte }}"><span class="ph-label">{{ artikel.categorie | upper }}</span></div>
-  {% endif %}
+{% macro foto_img(pad, alt, hoogte) %}
+  <div class="foto-wrapper" style="height:{{ hoogte }}"><img src="file://{{ pad }}" alt="{{ alt }}" /></div>
+{% endmacro %}
+
+{% macro foto_placeholder(categorie, hoogte) %}
+  <div class="foto-placeholder" style="height:{{ hoogte }}"><span class="ph-label">{{ categorie | upper }}</span></div>
 {% endmacro %}
 
 {% macro bron_badge(artikel) %}
@@ -24,8 +24,14 @@
 {% endmacro %}
 
 {% macro render_hero(artikel) %}
+{% set fotos = artikel.afbeelding_paden if artikel.afbeelding_paden is defined else [] %}
 <article class="artikel-hero">
-  {{ foto(artikel, "290px") }}
+  {# Hoofdfoto — vol breed #}
+  {% if fotos %}
+    {{ foto_img(fotos[0], artikel.titel, "290px") }}
+  {% else %}
+    {{ foto_placeholder(artikel.categorie, "290px") }}
+  {% endif %}
   <div class="hero-content">
     <div class="art-cat">{{ artikel.bron | upper }}</div>
     <h1 class="hero-titel">{{ artikel.titel }}</h1>
@@ -33,14 +39,33 @@
     <div class="pull-quote"><div class="pq-lijn"></div><p class="pq-tekst">{{ artikel.pull_quote }}</p></div>
     {% endif %}
     <div class="hero-tekst">{{ samenvatting(artikel) }}</div>
+    {# Extra foto's naast elkaar onder de tekst #}
+    {% if fotos | length > 1 %}
+    <div class="extra-fotos">
+      {% for pad in fotos[1:3] %}
+      <div class="extra-foto-item"><img src="file://{{ pad }}" alt="{{ artikel.titel }}" /></div>
+      {% endfor %}
+    </div>
+    {% endif %}
     {{ bron_badge(artikel) }}
   </div>
 </article>
 {% endmacro %}
 
 {% macro render_feature(artikel) %}
+{% set fotos = artikel.afbeelding_paden if artikel.afbeelding_paden is defined else [] %}
 <article class="artikel-feature">
-  {{ foto(artikel, "170px") }}
+  {% if fotos | length >= 2 %}
+  {# Twee foto's naast elkaar bovenaan #}
+  <div class="feature-foto-rij">
+    <div class="feature-foto-half"><img src="file://{{ fotos[0] }}" alt="{{ artikel.titel }}" /></div>
+    <div class="feature-foto-half" style="margin-left:2%"><img src="file://{{ fotos[1] }}" alt="{{ artikel.titel }}" /></div>
+  </div>
+  {% elif fotos %}
+    {{ foto_img(fotos[0], artikel.titel, "170px") }}
+  {% else %}
+    {{ foto_placeholder(artikel.categorie, "170px") }}
+  {% endif %}
   <div class="feature-content">
     <div class="art-cat">{{ artikel.bron | upper }}</div>
     <h2 class="feature-titel">{{ artikel.titel }}</h2>
@@ -51,6 +76,7 @@
 {% endmacro %}
 
 {% macro render_compact(artikel) %}
+{% set fotos = artikel.afbeelding_paden if artikel.afbeelding_paden is defined else [] %}
 <article class="artikel-compact">
   <div class="compact-content">
     <div class="art-cat">{{ artikel.bron | upper }}</div>
@@ -58,8 +84,8 @@
     <div class="compact-tekst">{{ samenvatting(artikel) }}</div>
     {{ bron_badge(artikel) }}
   </div>
-  {% if artikel.afbeelding_pad %}
-  <div class="compact-thumb"><img src="file://{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" /></div>
+  {% if fotos %}
+  <div class="compact-thumb"><img src="file://{{ fotos[0] }}" alt="{{ artikel.titel }}" /></div>
   {% endif %}
 </article>
 {% endmacro %}
@@ -106,6 +132,10 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 1
 .pq-lijn { width: 3px; min-height: 36px; background: #E8002D; flex-shrink: 0; margin-right: 10px; }
 .pq-tekst { font-size: 13pt; font-style: italic; color: #222; line-height: 1.35; }
 .hero-tekst { font-size: 10pt; line-height: 1.55; color: #333; margin-bottom: 7px; }
+.extra-fotos { display: flex; margin-top: 8px; margin-bottom: 6px; }
+.extra-foto-item { width: 49%; margin-right: 2%; }
+.extra-foto-item:last-child { margin-right: 0; }
+.extra-foto-item img { width: 100%; height: 130px; display: block; }
 
 /* FEATURE */
 .feature-rij { display: flex; margin-bottom: 12px; }
@@ -113,6 +143,9 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 1
 .artikel-feature:last-child { margin-right: 0; }
 .feature-titel { font-size: 13pt; font-weight: 900; line-height: 1.2; margin-bottom: 6px; color: #0a0a0a; }
 .feature-tekst { font-size: 9pt; line-height: 1.5; color: #444; margin-bottom: 6px; }
+.feature-foto-rij { display: flex; margin-bottom: 9px; }
+.feature-foto-half { width: 49%; }
+.feature-foto-half img { width: 100%; height: 130px; display: block; }
 
 /* COMPACT */
 .compact-rij { display: flex; flex-wrap: wrap; margin-bottom: 12px; }

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 RSS_SOURCES = [
     # Tech (80% gewicht) — alleen Nederlandse bronnen
-    {"url": "https://feeds.tweakers.net/nieuws/top.rss", "categorie": "tech", "taal": "nl", "naam": "Tweakers"},
+    {"url": "https://tweakers.net/feeds/nieuws.xml", "categorie": "tech", "taal": "nl", "naam": "Tweakers"},
     {"url": "https://www.bright.nl/feed/news.xml", "categorie": "tech", "taal": "nl", "naam": "Bright"},
     # Nationaal (10% gewicht)
     {"url": "https://feeds.nos.nl/nosnieuwsalgemeen", "categorie": "nationaal", "taal": "nl", "naam": "NOS"},
@@ -222,17 +222,32 @@ def scrape_artikel(url: str) -> dict:
         volledige_tekst = volledige_tekst[:_MAX_TEKST_CHARS]
 
         # ------------------------------------------------------------------ #
-        # Afbeelding extraheren en downloaden
+        # Afbeeldingen extraheren en downloaden (max 3 per artikel)
         # ------------------------------------------------------------------ #
-        afbeelding_pad: str | None = None
+        _MAX_FOTOS_PER_ARTIKEL = 3
+        afbeelding_paden: list[str] = []
+        geziene_srcs: set[str] = set()
 
+        # Zoek afbeeldingen eerst in de tekst-container, dan fallback naar hele pagina
         zoek_context = tekst_container if tekst_container else soup
-        for img in zoek_context.find_all("img"):
-            src = img.get("src", "") or ""
+        kandidaat_imgs = zoek_context.find_all("img", src=True)
+        if not kandidaat_imgs:
+            kandidaat_imgs = soup.find_all("img", src=True)
+
+        for img in kandidaat_imgs:
+            if len(afbeelding_paden) >= _MAX_FOTOS_PER_ARTIKEL:
+                break
+
+            src = img.get("src", "") or img.get("data-src", "") or ""
 
             # Moet een absolute URL zijn
             if not (src.startswith("http://") or src.startswith("https://")):
                 continue
+
+            # Geen duplicaten binnen dit artikel
+            if src in geziene_srcs:
+                continue
+            geziene_srcs.add(src)
 
             # Sla kleine thumbnails over op basis van width-attribuut
             width_attr = img.get("width", "")
@@ -243,9 +258,9 @@ def scrape_artikel(url: str) -> dict:
                 except (ValueError, TypeError):
                     pass
 
-            # Eenvoudige heuristiek: sla src's over die typische thumbnail-tekens bevatten
+            # Sla src's over die typische thumbnail-tekens bevatten
             src_lower = src.lower()
-            thumbnail_tekens = ("thumb", "icon", "avatar", "logo", "pixel", "1x1", "spacer")
+            thumbnail_tekens = ("thumb", "icon", "avatar", "logo", "pixel", "1x1", "spacer", "67x67", "60x")
             if any(t in src_lower for t in thumbnail_tekens):
                 continue
 
@@ -254,6 +269,11 @@ def scrape_artikel(url: str) -> dict:
                 _zorg_voor_img_dir()
                 img_resp = requests.get(src, timeout=10, headers=_HEADERS)
                 img_resp.raise_for_status()
+
+                # Sla te kleine afbeeldingen over op basis van Content-Length
+                content_length = int(img_resp.headers.get("Content-Length", 0) or 0)
+                if content_length and content_length < 5000:
+                    continue
 
                 # Bepaal extensie op basis van Content-Type
                 content_type = img_resp.headers.get("Content-Type", "image/jpeg")
@@ -270,19 +290,18 @@ def scrape_artikel(url: str) -> dict:
                 try:
                     with os.fdopen(fd, "wb") as f:
                         f.write(img_resp.content)
-                    afbeelding_pad = pad
+                    afbeelding_paden.append(pad)
                 except Exception:
                     os.close(fd)
                     raise
 
-                break  # Eerste geschikte afbeelding gevonden
             except Exception as exc:
                 logger.warning("Kon afbeelding niet downloaden van '%s': %s", src, exc)
                 continue
 
         return {
             "volledige_tekst": volledige_tekst,
-            "afbeelding_pad": afbeelding_pad,
+            "afbeelding_paden": afbeelding_paden,
         }
 
     except Exception as exc:
@@ -325,30 +344,25 @@ def haal_alles_op() -> list[dict]:
         url = artikel.get("url", "")
         if not url:
             artikel["volledige_tekst"] = ""
-            artikel["afbeelding_pad"] = None
+            artikel["afbeelding_paden"] = []
             continue
 
         logger.debug("Scrapen artikel %d/%d: %s", i + 1, len(alle_artikelen), url)
         scrape_data = scrape_artikel(url)
         artikel["volledige_tekst"] = scrape_data.get("volledige_tekst", "")
-        artikel["afbeelding_pad"] = scrape_data.get("afbeelding_pad", None)
+        artikel["afbeelding_paden"] = scrape_data.get("afbeelding_paden", [])
 
-    # Dedupliceer afbeeldingen op pad én op URL — elk plaatje mag maar één keer voorkomen
+    # Dedupliceer afbeeldingen over alle artikelen — elk plaatje mag maar één keer voorkomen
     gebruikte_afbeelding_paden: set[str] = set()
-    gebruikte_afbeelding_urls: set[str] = set()
     for artikel in alle_artikelen:
-        pad = artikel.get("afbeelding_pad")
-        url = artikel.get("afbeelding_url")
-        if pad and pad in gebruikte_afbeelding_paden:
-            artikel["afbeelding_pad"] = None
-            logger.debug("Dubbel afbeeldingspad verwijderd voor '%s'", artikel.get("titel", ""))
-        elif url and url in gebruikte_afbeelding_urls:
-            artikel["afbeelding_pad"] = None
-            logger.debug("Dubbele afbeeldings-URL verwijderd voor '%s'", artikel.get("titel", ""))
-        else:
-            if pad:
+        paden = artikel.get("afbeelding_paden", [])
+        unieke_paden = []
+        for pad in paden:
+            if pad not in gebruikte_afbeelding_paden:
                 gebruikte_afbeelding_paden.add(pad)
-            if url:
-                gebruikte_afbeelding_urls.add(url)
+                unieke_paden.append(pad)
+            else:
+                logger.debug("Dubbel afbeeldingspad verwijderd voor '%s'", artikel.get("titel", ""))
+        artikel["afbeelding_paden"] = unieke_paden
 
     return alle_artikelen
