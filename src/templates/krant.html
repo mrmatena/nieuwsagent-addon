@@ -1,937 +1,243 @@
+{# ===================================================================
+   NieuwsAgent — Wired-stijl magazine template
+   WeasyPrint: Flexbox only, geen CSS Grid, geen JS
+   =================================================================== #}
+
+{% macro format_tijd(iso_str) %}{%- if iso_str and 'T' in iso_str -%}{{ iso_str.split('T')[1][:5] }}{%- endif -%}{% endmacro %}
+{% macro samenvatting(artikel) %}{%- if artikel.samenvatting_nl -%}{{ artikel.samenvatting_nl }}{%- else -%}{{ artikel.samenvatting }}{%- endif -%}{% endmacro %}
+{% macro pijl(kleur) %}{%- if kleur == 'groen' -%}▲{%- elif kleur == 'rood' -%}▼{%- else -%}◆{%- endif -%}{% endmacro %}
+
+{% macro foto(artikel, hoogte) %}
+  {% if artikel.afbeelding_pad %}
+    <div class="foto-wrapper" style="height:{{ hoogte }}"><img src="file://{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" /></div>
+  {% else %}
+    <div class="foto-placeholder" style="height:{{ hoogte }}"><span class="ph-label">{{ artikel.categorie | upper }}</span></div>
+  {% endif %}
+{% endmacro %}
+
+{% macro bron_badge(artikel) %}
+<div class="bron-badge">
+  <span class="bron-naam">{{ artikel.bron }}</span>
+  <span class="bron-tijd">{{ format_tijd(artikel.gepubliceerd) }}</span>
+  {% if artikel.score is defined %}<span class="bron-score">{{ "%.1f"|format(artikel.score) }}</span>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_hero(artikel) %}
+<article class="artikel-hero">
+  {{ foto(artikel, "290px") }}
+  <div class="hero-content">
+    <div class="art-cat">{{ artikel.bron | upper }}</div>
+    <h1 class="hero-titel">{{ artikel.titel }}</h1>
+    {% if artikel.pull_quote %}
+    <div class="pull-quote"><div class="pq-lijn"></div><p class="pq-tekst">{{ artikel.pull_quote }}</p></div>
+    {% endif %}
+    <div class="hero-tekst">{{ samenvatting(artikel) }}</div>
+    {{ bron_badge(artikel) }}
+  </div>
+</article>
+{% endmacro %}
+
+{% macro render_feature(artikel) %}
+<article class="artikel-feature">
+  {{ foto(artikel, "170px") }}
+  <div class="feature-content">
+    <div class="art-cat">{{ artikel.bron | upper }}</div>
+    <h2 class="feature-titel">{{ artikel.titel }}</h2>
+    <div class="feature-tekst">{{ samenvatting(artikel) }}</div>
+    {{ bron_badge(artikel) }}
+  </div>
+</article>
+{% endmacro %}
+
+{% macro render_compact(artikel) %}
+<article class="artikel-compact">
+  <div class="compact-content">
+    <div class="art-cat">{{ artikel.bron | upper }}</div>
+    <h3 class="compact-titel">{{ artikel.titel }}</h3>
+    <div class="compact-tekst">{{ samenvatting(artikel) }}</div>
+    {{ bron_badge(artikel) }}
+  </div>
+  {% if artikel.afbeelding_pad %}
+  <div class="compact-thumb"><img src="file://{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" /></div>
+  {% endif %}
+</article>
+{% endmacro %}
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>De NieuwsAgent — {{ datum }}</title>
-  <style>
-    /* ============================================================
-       PAGINA & RESET
-    ============================================================ */
-    @page {
-      size: A4;
-      margin: 12mm 15mm 15mm 15mm;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Georgia, 'Times New Roman', serif;
-      background: #f5f5f0;
-      color: #1a1a2e;
-      font-size: 9pt;
-      line-height: 1.45;
-    }
-
-    /* ============================================================
-       HEADER
-    ============================================================ */
-    .header {
-      background: #1a1a2e;
-      color: #ffffff;
-      text-align: center;
-      padding: 10mm 8mm 6mm 8mm;
-      border-bottom: 4px solid #e63946;
-    }
-
-    .header-meta-top {
-      display: -webkit-flex;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4mm;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7.5pt;
-      color: #a0a8c0;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .header-meta-top span {
-      flex: 1;
-    }
-
-    .header-meta-top .meta-center {
-      text-align: center;
-    }
-
-    .header-meta-top .meta-right {
-      text-align: right;
-    }
-
-    .krant-naam {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 38pt;
-      font-weight: bold;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #ffffff;
-      line-height: 1;
-      margin-bottom: 2mm;
-    }
-
-    .krant-naam .accent {
-      color: #e63946;
-    }
-
-    .header-tagline {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7pt;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: #a0a8c0;
-      margin-bottom: 4mm;
-    }
-
-    .header-divider {
-      border: none;
-      border-top: 1px solid #3a3a5c;
-      margin: 3mm 0 3mm 0;
-    }
-
-    .header-datum-editie {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8.5pt;
-      color: #c8cede;
-      letter-spacing: 0.04em;
-    }
-
-    .header-datum-editie .editie-badge {
-      display: inline-block;
-      background: #e63946;
-      color: #ffffff;
-      font-size: 7pt;
-      font-weight: bold;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 1px 5px;
-      margin-left: 4px;
-      border-radius: 2px;
-    }
-
-    /* ============================================================
-       TICKER BALK
-    ============================================================ */
-    .ticker-balk {
-      background: #0d0d1a;
-      color: #e0e0e0;
-      padding: 2.5mm 5mm;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      border-bottom: 2px solid #e63946;
-    }
-
-    .ticker-label {
-      display: inline-block;
-      background: #e63946;
-      color: #fff;
-      font-size: 7pt;
-      font-weight: bold;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 1px 6px;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-    .ticker-item {
-      display: inline-block;
-      margin-right: 18px;
-      vertical-align: middle;
-    }
-
-    .ticker-ticker {
-      font-weight: bold;
-      color: #ffffff;
-      margin-right: 4px;
-    }
-
-    .ticker-naam {
-      color: #8090a8;
-      font-size: 7.5pt;
-      margin-right: 4px;
-    }
-
-    .ticker-prijs {
-      color: #c8cede;
-      margin-right: 3px;
-    }
-
-    .ticker-wijziging.groen {
-      color: #4cca7a;
-      font-weight: bold;
-    }
-
-    .ticker-wijziging.rood {
-      color: #e63946;
-      font-weight: bold;
-    }
-
-    .ticker-wijziging.grijs {
-      color: #8090a8;
-    }
-
-    .ticker-sep {
-      color: #3a3a5c;
-      margin: 0 4px;
-    }
-
-    /* ============================================================
-       SECTIE LABELS
-    ============================================================ */
-    .sectie-label {
-      background: #e63946;
-      color: #ffffff;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      font-weight: bold;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      padding: 2mm 5mm;
-      margin: 5mm 0 4mm 0;
-      display: block;
-    }
-
-    .sectie-label-donker {
-      background: #1a1a2e;
-    }
-
-    /* ============================================================
-       ARTIKEL KAARTEN — GEDEELD
-    ============================================================ */
-    .artikel-kaart {
-      background: #ffffff;
-      border-top: 3px solid #1a1a2e;
-      box-shadow: 0 1px 4px rgba(26, 26, 46, 0.10);
-      page-break-inside: avoid;
-    }
-
-    .artikel-kaart .artikel-bron-rij {
-      display: -webkit-flex;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 2mm 3mm 1.5mm 3mm;
-      border-bottom: 1px solid #eaeaea;
-    }
-
-    .artikel-bron {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: #8090a8;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .artikel-score {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: #c8cede;
-      background: #1a1a2e;
-      padding: 1px 4px;
-      border-radius: 2px;
-      font-weight: bold;
-    }
-
-    .artikel-tijd {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: #aaaaaa;
-      margin-left: 4px;
-    }
-
-    /* ============================================================
-       GROOT ARTIKEL (EERSTE TECH)
-    ============================================================ */
-    .artikel-groot-wrapper {
-      margin-bottom: 4mm;
-      page-break-inside: avoid;
-    }
-
-    .artikel-groot {
-      display: -webkit-flex;
-      display: flex;
-      background: #ffffff;
-      border-top: 4px solid #1a1a2e;
-      box-shadow: 0 2px 8px rgba(26, 26, 46, 0.12);
-    }
-
-    .artikel-groot-foto {
-      width: 42%;
-      flex-shrink: 0;
-      overflow: hidden;
-      background: #1a1a2e;
-      min-height: 55mm;
-    }
-
-    .artikel-groot-foto img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .artikel-groot-foto .placeholder-foto {
-      width: 100%;
-      height: 100%;
-      min-height: 55mm;
-      background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5c 100%);
-      display: -webkit-flex;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .artikel-groot-foto .placeholder-foto .placeholder-label {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      color: #3a4a6e;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-    }
-
-    .artikel-groot-tekst {
-      flex: 1;
-      padding: 5mm 6mm;
-    }
-
-    .artikel-groot-tekst .artikel-bron-rij {
-      padding: 0 0 2mm 0;
-      border-bottom: 1px solid #eaeaea;
-      margin-bottom: 3mm;
-    }
-
-    .artikel-groot .artikel-titel {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 16pt;
-      font-weight: bold;
-      color: #1a1a2e;
-      line-height: 1.2;
-      margin-bottom: 3mm;
-    }
-
-    .artikel-groot .artikel-samenvatting {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 9pt;
-      color: #333344;
-      line-height: 1.55;
-    }
-
-    /* ============================================================
-       TECH GRID — KLEINE ARTIKELEN
-    ============================================================ */
-    .artikel-grid {
-      display: -webkit-flex;
-      display: flex;
-      flex-wrap: wrap;
-      margin-left: -2mm;
-      margin-right: -2mm;
-      margin-bottom: 2mm;
-    }
-
-    .artikel-grid-item {
-      width: 33.333%;
-      padding: 0 2mm 4mm 2mm;
-    }
-
-    .artikel-klein {
-      height: 100%;
-    }
-
-    .artikel-klein-foto {
-      width: 100%;
-      height: 28mm;
-      overflow: hidden;
-      background: #1a1a2e;
-    }
-
-    .artikel-klein-foto img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .artikel-klein-foto .placeholder-foto {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5c 100%);
-      display: -webkit-flex;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .artikel-klein-foto .placeholder-foto .placeholder-label {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7pt;
-      color: #3a4a6e;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    .artikel-klein-tekst {
-      padding: 2.5mm 3mm 3mm 3mm;
-    }
-
-    .artikel-klein .artikel-titel {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 10pt;
-      font-weight: bold;
-      color: #1a1a2e;
-      line-height: 1.25;
-      margin-bottom: 2mm;
-    }
-
-    .artikel-klein .artikel-samenvatting {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7.5pt;
-      color: #444456;
-      line-height: 1.45;
-    }
-
-    /* ============================================================
-       NATIONAAL & INTERNATIONAAL — 2 KOLOMMEN
-    ============================================================ */
-    .twee-kolom-wrapper {
-      display: -webkit-flex;
-      display: flex;
-      margin-left: -2.5mm;
-      margin-right: -2.5mm;
-      margin-bottom: 2mm;
-    }
-
-    .twee-kolom-col {
-      width: 50%;
-      padding: 0 2.5mm;
-    }
-
-    .kolom-header {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7pt;
-      font-weight: bold;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #ffffff;
-      background: #1a1a2e;
-      padding: 1.5mm 3mm;
-      margin-bottom: 2.5mm;
-      border-left: 4px solid #e63946;
-    }
-
-    .artikel-compact {
-      background: #ffffff;
-      border-top: 2px solid #1a1a2e;
-      box-shadow: 0 1px 3px rgba(26, 26, 46, 0.08);
-      margin-bottom: 3mm;
-      page-break-inside: avoid;
-    }
-
-    .artikel-compact-inner {
-      padding: 2.5mm 3mm;
-    }
-
-    .artikel-compact .artikel-titel {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 9.5pt;
-      font-weight: bold;
-      color: #1a1a2e;
-      line-height: 1.25;
-      margin-bottom: 1.5mm;
-    }
-
-    .artikel-compact .artikel-samenvatting {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 7.5pt;
-      color: #444456;
-      line-height: 1.4;
-    }
-
-    /* ============================================================
-       MARKTEN SECTIE
-    ============================================================ */
-    .markten-sectie {
-      page-break-before: always;
-    }
-
-    .markten-tabel-wrapper {
-      background: #ffffff;
-      border-top: 3px solid #1a1a2e;
-      box-shadow: 0 2px 6px rgba(26, 26, 46, 0.10);
-      padding: 0;
-      page-break-inside: avoid;
-    }
-
-    .markten-tabel {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8.5pt;
-    }
-
-    .markten-tabel thead tr {
-      background: #1a1a2e;
-      color: #ffffff;
-    }
-
-    .markten-tabel thead th {
-      padding: 3mm 4mm;
-      text-align: left;
-      font-size: 7.5pt;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: bold;
-    }
-
-    .markten-tabel thead th.num {
-      text-align: right;
-    }
-
-    .markten-tabel tbody tr {
-      border-bottom: 1px solid #eaeaea;
-    }
-
-    .markten-tabel tbody tr:nth-child(even) {
-      background: #f9f9f6;
-    }
-
-    .markten-tabel tbody tr:nth-child(odd) {
-      background: #ffffff;
-    }
-
-    .markten-tabel tbody td {
-      padding: 2.5mm 4mm;
-      vertical-align: middle;
-    }
-
-    .markten-tabel td.num {
-      text-align: right;
-    }
-
-    .markten-ticker {
-      font-weight: bold;
-      color: #1a1a2e;
-      font-size: 9pt;
-    }
-
-    .markten-naam {
-      color: #8090a8;
-      font-size: 7.5pt;
-      margin-top: 0.5mm;
-    }
-
-    .markten-prijs {
-      font-weight: bold;
-      color: #1a1a2e;
-    }
-
-    .markten-wijziging {
-      font-weight: bold;
-      padding: 1px 5px;
-      border-radius: 2px;
-      font-size: 8pt;
-    }
-
-    .markten-wijziging.groen {
-      color: #1a6630;
-      background: #d4f5e0;
-    }
-
-    .markten-wijziging.rood {
-      color: #7a0f1a;
-      background: #fde0e3;
-    }
-
-    .markten-wijziging.grijs {
-      color: #555566;
-      background: #ebebeb;
-    }
-
-    .wijziging-pijl {
-      font-size: 9pt;
-      margin-right: 1px;
-    }
-
-    /* ============================================================
-       FOOTER
-    ============================================================ */
-    .footer {
-      margin-top: 6mm;
-      border-top: 2px solid #1a1a2e;
-      padding-top: 3mm;
-      display: -webkit-flex;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .footer-left {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: #8090a8;
-    }
-
-    .footer-center {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 8pt;
-      color: #1a1a2e;
-      font-weight: bold;
-      letter-spacing: 0.1em;
-      text-align: center;
-    }
-
-    .footer-right {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: #8090a8;
-      text-align: right;
-    }
-
-    /* ============================================================
-       PAGINANUMMER (via CSS counter)
-    ============================================================ */
-    @page {
-      @bottom-center {
-        content: "— " counter(page) " —";
-        font-family: Georgia, serif;
-        font-size: 8pt;
-        color: #8090a8;
-      }
-    }
-
-    /* ============================================================
-       HULPKLASSEN
-    ============================================================ */
-    .clearfix::after {
-      content: "";
-      display: table;
-      clear: both;
-    }
-
-    .mb-2 { margin-bottom: 2mm; }
-    .mb-4 { margin-bottom: 4mm; }
-    .mt-4 { margin-top: 4mm; }
-
-    /* Decoratieve horizontale lijn */
-    .ornament-lijn {
-      text-align: center;
-      font-family: Georgia, serif;
-      color: #8090a8;
-      font-size: 10pt;
-      letter-spacing: 0.3em;
-      margin: 3mm 0;
-    }
-
-  </style>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+@page { size: A4; margin: 12mm 14mm; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10pt; color: #111; background: #fff; line-height: 1.45; }
+
+/* MASTHEAD */
+.masthead { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 6px; border-bottom: 3px solid #E8002D; margin-bottom: 0; }
+.masthead-logo { font-size: 30pt; font-weight: 900; letter-spacing: -1.5px; color: #111; text-transform: uppercase; line-height: 1; }
+.masthead-logo span { color: #E8002D; }
+.masthead-meta { text-align: right; font-size: 7pt; color: #777; line-height: 1.6; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* TICKER */
+.ticker-balk { display: flex; flex-wrap: wrap; background: #111; color: #fff; font-size: 7pt; font-weight: 700; padding: 3px 8px; margin-bottom: 10px; }
+.ticker-item { padding: 0 9px; border-right: 1px solid #333; }
+.ticker-item:last-child { border-right: none; }
+.ticker-naam { color: #aaa; margin-right: 3px; }
+.groen .ticker-pct { color: #4ade80; }
+.rood  .ticker-pct { color: #f87171; }
+.grijs .ticker-pct { color: #9ca3af; }
+
+/* SECTIE HEADER */
+.sectie-header { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; }
+.sectie-label { font-size: 7pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #E8002D; white-space: nowrap; }
+.sectie-lijn { flex: 1; height: 1px; background: #ddd; }
+
+/* FOTO */
+.foto-wrapper { width: 100%; overflow: hidden; margin-bottom: 9px; }
+.foto-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-placeholder { background: #1a1a2e; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 9px; }
+.ph-label { font-size: 8pt; font-weight: 900; letter-spacing: 3px; color: rgba(255,255,255,0.25); text-transform: uppercase; }
+
+/* HERO */
+.artikel-hero { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee; }
+.hero-titel { font-size: 22pt; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 8px; color: #0a0a0a; }
+.pull-quote { display: flex; align-items: flex-start; gap: 10px; margin: 9px 0; }
+.pq-lijn { width: 3px; min-height: 36px; background: #E8002D; flex-shrink: 0; }
+.pq-tekst { font-size: 13pt; font-style: italic; color: #222; line-height: 1.35; }
+.hero-tekst { font-size: 10pt; line-height: 1.55; color: #333; margin-bottom: 7px; }
+
+/* FEATURE */
+.feature-rij { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.artikel-feature { flex: 1 1 45%; min-width: 200px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+.feature-titel { font-size: 13pt; font-weight: 900; line-height: 1.2; margin-bottom: 6px; color: #0a0a0a; }
+.feature-tekst { font-size: 9pt; line-height: 1.5; color: #444; margin-bottom: 6px; }
+
+/* COMPACT */
+.compact-rij { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.artikel-compact { flex: 1 1 30%; min-width: 150px; display: flex; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.compact-content { flex: 1; }
+.compact-thumb { width: 68px; flex-shrink: 0; }
+.compact-thumb img { width: 68px; height: 68px; object-fit: cover; display: block; }
+.compact-titel { font-size: 10pt; font-weight: 800; line-height: 1.2; margin-bottom: 4px; color: #0a0a0a; }
+.compact-tekst { font-size: 8pt; line-height: 1.45; color: #555; margin-bottom: 4px; }
+
+/* GEDEELD */
+.art-cat { font-size: 6.5pt; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #E8002D; margin-bottom: 4px; }
+.bron-badge { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.bron-naam { font-size: 7pt; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+.bron-tijd { font-size: 7pt; color: #bbb; }
+.bron-score { font-size: 7pt; font-weight: 700; color: #E8002D; background: #fff5f5; padding: 1px 4px; }
+
+/* TWEE KOLOM */
+.twee-kolom { display: flex; gap: 14px; margin-bottom: 12px; }
+.kolom-links { flex: 1.2; }
+.kolom-rechts { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+/* MARKTEN */
+.markten-wrapper { page-break-before: always; padding-top: 8px; }
+.markten-commentaar { font-size: 10pt; line-height: 1.55; color: #333; margin-bottom: 12px; padding: 10px 14px; border-left: 3px solid #E8002D; background: #fafafa; }
+.markten-tabel { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.markten-tabel th { font-size: 7pt; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 2px solid #111; padding: 4px 8px 4px 0; text-align: left; }
+.markten-tabel td { padding: 5px 8px 5px 0; border-bottom: 1px solid #f0f0f0; }
+.markten-tabel tr:last-child td { border-bottom: none; }
+.naam-cel { font-weight: 700; }
+.ticker-cel { color: #999; font-size: 8pt; font-family: monospace; }
+.prijs-cel { font-weight: 700; text-align: right; padding-right: 16px; }
+.wijziging-cel { font-weight: 700; text-align: right; padding-right: 16px; }
+.context-cel { font-size: 7.5pt; color: #888; }
+.groen .wijziging-cel { color: #16a34a; }
+.rood  .wijziging-cel { color: #dc2626; }
+.grijs .wijziging-cel { color: #6b7280; }
+</style>
 </head>
 <body>
 
-{# ================================================================
-   JINJA2 MACRO'S
-================================================================ #}
+<div class="masthead">
+  <div class="masthead-logo">NIEUWS<span>AGENT</span></div>
+  <div class="masthead-meta">{{ datum }}<br>{{ editie | upper }} EDITIE</div>
+</div>
 
-{# Formatteer gepubliceerd-tijdstip naar leesbaar uur #}
-{% macro format_tijd(gepubliceerd) %}
-  {%- if gepubliceerd -%}
-    {{ gepubliceerd[11:16] if gepubliceerd|length > 10 else gepubliceerd }}
-  {%- endif -%}
-{% endmacro %}
-
-{# Clip tekst op aantal woorden #}
-{% macro clip(tekst, max_woorden) %}
-  {%- set woorden = tekst.split() -%}
-  {%- if woorden|length > max_woorden -%}
-    {{ woorden[:max_woorden] | join(' ') }}…
-  {%- else -%}
-    {{ tekst }}
-  {%- endif -%}
-{% endmacro %}
-
-{# Samenvatting: gebruik nl-samenvatting indien aanwezig, anders fallback #}
-{% macro samenvatting(artikel) %}
-  {%- if artikel.samenvatting_nl -%}
-    {{ artikel.samenvatting_nl }}
-  {%- elif artikel.samenvatting -%}
-    {{ artikel.samenvatting }}
-  {%- else -%}
-    Geen samenvatting beschikbaar.
-  {%- endif -%}
-{% endmacro %}
-
-{# Foto blok — groot artikel #}
-{% macro foto_groot(artikel) %}
-  <div class="artikel-groot-foto">
-    {% if artikel.afbeelding_pad %}
-      <img src="{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" />
-    {% else %}
-      <div class="placeholder-foto">
-        <span class="placeholder-label">{{ artikel.categorie | upper if artikel.categorie else 'NIEUWS' }}</span>
-      </div>
-    {% endif %}
-  </div>
-{% endmacro %}
-
-{# Foto blok — klein artikel #}
-{% macro foto_klein(artikel) %}
-  <div class="artikel-klein-foto">
-    {% if artikel.afbeelding_pad %}
-      <img src="{{ artikel.afbeelding_pad }}" alt="{{ artikel.titel }}" />
-    {% else %}
-      <div class="placeholder-foto">
-        <span class="placeholder-label">{{ artikel.categorie | upper if artikel.categorie else 'NIEUWS' }}</span>
-      </div>
-    {% endif %}
-  </div>
-{% endmacro %}
-
-{# Bronbalk (bron + score + tijd) #}
-{% macro bron_rij(artikel) %}
-  <div class="artikel-bron-rij">
-    <span class="artikel-bron">{{ artikel.bron if artikel.bron else 'Onbekend' }}</span>
-    <span>
-      {% if artikel.gepubliceerd %}
-        <span class="artikel-tijd">{{ format_tijd(artikel.gepubliceerd) }}</span>
-      {% endif %}
-      {% if artikel.score %}
-        <span class="artikel-score">{{ artikel.score | round(1) }}</span>
-      {% endif %}
-    </span>
-  </div>
-{% endmacro %}
-
-{# Klein artikel-kaartje (voor grid) #}
-{% macro artikel_klein(artikel) %}
-  <div class="artikel-kaart artikel-klein">
-    {{ foto_klein(artikel) }}
-    <div class="artikel-klein-tekst">
-      {{ bron_rij(artikel) }}
-      <div class="artikel-titel">{{ artikel.titel }}</div>
-      <div class="artikel-samenvatting">{{ clip(samenvatting(artikel), 55) }}</div>
-    </div>
-  </div>
-{% endmacro %}
-
-{# Compact artikel-kaartje (nationaal/internationaal) #}
-{% macro artikel_compact(artikel) %}
-  <div class="artikel-compact">
-    {{ bron_rij(artikel) }}
-    <div class="artikel-compact-inner">
-      <div class="artikel-titel">{{ artikel.titel }}</div>
-      <div class="artikel-samenvatting">{{ clip(samenvatting(artikel), 45) }}</div>
-    </div>
-  </div>
-{% endmacro %}
-
-{# Wijziging pijl #}
-{% macro pijl(kleur) %}
-  {%- if kleur == 'groen' -%}<span class="wijziging-pijl">▲</span>
-  {%- elif kleur == 'rood' -%}<span class="wijziging-pijl">▼</span>
-  {%- else -%}<span class="wijziging-pijl">◆</span>
-  {%- endif -%}
-{% endmacro %}
-
-{# ================================================================
-   HEADER
-================================================================ #}
-<header class="header">
-  <div class="header-meta-top">
-    <span>Editie: <strong>{{ editie | upper }}</strong></span>
-    <span class="meta-center">Est. 2026 &nbsp;·&nbsp; Dagelijks nieuws op maat</span>
-    <span class="meta-right">{{ datum }}</span>
-  </div>
-
-  <div class="krant-naam">De <span class="accent">Nieuws</span>Agent</div>
-  <div class="header-tagline">Uw persoonlijke krant &nbsp;·&nbsp; Elke dag. Elke editie.</div>
-  <hr class="header-divider" />
-  <div class="header-datum-editie">
-    {{ datum }}
-    <span class="editie-badge">{{ editie }} Editie</span>
-  </div>
-</header>
-
-{# ================================================================
-   TICKER BALK
-================================================================ #}
-{% if aandelen %}
 <div class="ticker-balk">
-  <span class="ticker-label">Markten</span>
   {% for a in aandelen %}
-    <span class="ticker-item">
-      <span class="ticker-ticker">{{ a.ticker }}</span>
-      <span class="ticker-naam">{{ a.naam }}</span>
-      <span class="ticker-prijs">{{ a.prijs }}</span>
-      <span class="ticker-wijziging {{ a.kleur }}">{{ a.wijziging_pct }}</span>
-    </span>
-    {% if not loop.last %}<span class="ticker-sep">|</span>{% endif %}
+  <div class="ticker-item {{ a.kleur }}">
+    <span class="ticker-naam">{{ a.naam }}</span>{{ a.prijs }}<span class="ticker-pct"> {{ pijl(a.kleur) }} {{ a.wijziging_pct }}</span>
+  </div>
   {% endfor %}
 </div>
-{% endif %}
 
-{# ================================================================
-   SECTIE: TECHNOLOGIE
-================================================================ #}
-{% if tech_artikelen %}
-<div class="sectie-label">&#9670; Technologie</div>
+{# ---- TECH ---- #}
+<div class="sectie-header"><span class="sectie-label">Tech</span><div class="sectie-lijn"></div></div>
 
-{# — Eerste artikel: groot, volledige breedte — #}
-{% set hoofd = tech_artikelen[0] %}
-<div class="artikel-groot-wrapper">
-  <div class="artikel-groot">
-    {{ foto_groot(hoofd) }}
-    <div class="artikel-groot-tekst">
-      {{ bron_rij(hoofd) }}
-      <div class="artikel-titel">{{ hoofd.titel }}</div>
-      <div class="artikel-samenvatting">{{ clip(samenvatting(hoofd), 140) }}</div>
-    </div>
-  </div>
-</div>
+{% set tech_heroes   = tech_artikelen | selectattr("tier", "equalto", "hero")    | list %}
+{% set tech_features = tech_artikelen | selectattr("tier", "equalto", "feature") | list %}
+{% set tech_compacts = tech_artikelen | selectattr("tier", "equalto", "compact") | list %}
 
-{# — Overige tech-artikelen: 3-kolommen grid — #}
-{% set rest = tech_artikelen[1:] %}
-{% if rest %}
-  {# Rij 1: items 0-2 #}
-  {% if rest|length > 0 %}
-    <div class="artikel-grid">
-      {% for artikel in rest[:3] %}
-        <div class="artikel-grid-item">
-          {{ artikel_klein(artikel) }}
-        </div>
-      {% endfor %}
-    </div>
+{% if tech_heroes %}
+  {{ render_hero(tech_heroes[0]) }}
+  {% if tech_features %}
+  <div class="feature-rij">{% for a in tech_features %}{{ render_feature(a) }}{% endfor %}</div>
   {% endif %}
-
-  {# Rij 2: items 3-5 #}
-  {% if rest|length > 3 %}
-    <div class="artikel-grid">
-      {% for artikel in rest[3:6] %}
-        <div class="artikel-grid-item">
-          {{ artikel_klein(artikel) }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  {# Rij 3: items 6-8 (als aanwezig) #}
-  {% if rest|length > 6 %}
-    <div class="artikel-grid">
-      {% for artikel in rest[6:9] %}
-        <div class="artikel-grid-item">
-          {{ artikel_klein(artikel) }}
-        </div>
-      {% endfor %}
-    </div>
+{% elif tech_features %}
+  {{ render_hero(tech_features[0]) }}
+  {% if tech_features | length > 1 %}
+  <div class="feature-rij">{% for a in tech_features[1:] %}{{ render_feature(a) }}{% endfor %}</div>
   {% endif %}
 {% endif %}
 
-{% endif %}{# einde tech_artikelen #}
+{% if tech_compacts %}
+<div class="compact-rij">{% for a in tech_compacts %}{{ render_compact(a) }}{% endfor %}</div>
+{% endif %}
 
-{# ================================================================
-   SECTIE: NEDERLAND & WERELD — 2 KOLOMMEN
-================================================================ #}
-{% if nationaal_artikelen or internationaal_artikelen %}
-<div class="sectie-label">&#9670; Nederland &amp; Wereld</div>
+{# ---- NATIONAAL ---- #}
+<div class="sectie-header"><span class="sectie-label">Nationaal</span><div class="sectie-lijn"></div></div>
 
-<div class="twee-kolom-wrapper">
+{% set nat_top = nationaal_artikelen[:1] %}
+{% set nat_rest = nationaal_artikelen[1:] %}
+<div class="twee-kolom">
+  <div class="kolom-links">{% if nat_top %}{{ render_feature(nat_top[0]) }}{% endif %}</div>
+  <div class="kolom-rechts">{% for a in nat_rest %}{{ render_compact(a) }}{% endfor %}</div>
+</div>
 
-  {# — Linker kolom: Nationaal — #}
-  <div class="twee-kolom-col">
-    <div class="kolom-header">Nederland</div>
-    {% if nationaal_artikelen %}
-      {% for artikel in nationaal_artikelen %}
-        {{ artikel_compact(artikel) }}
-      {% endfor %}
-    {% else %}
-      <p style="color: #8090a8; font-size: 7.5pt; font-family: Arial, sans-serif;">Geen nationaal nieuws beschikbaar.</p>
-    {% endif %}
-  </div>
-
-  {# — Rechter kolom: Internationaal — #}
-  <div class="twee-kolom-col">
-    <div class="kolom-header">Wereld</div>
-    {% if internationaal_artikelen %}
-      {% for artikel in internationaal_artikelen %}
-        {{ artikel_compact(artikel) }}
-      {% endfor %}
-    {% else %}
-      <p style="color: #8090a8; font-size: 7.5pt; font-family: Arial, sans-serif;">Geen internationaal nieuws beschikbaar.</p>
-    {% endif %}
-  </div>
-
+{# ---- INTERNATIONAAL ---- #}
+{% if internationaal_artikelen %}
+<div class="sectie-header"><span class="sectie-label">Internationaal</span><div class="sectie-lijn"></div></div>
+{% set int_top = internationaal_artikelen[:1] %}
+{% set int_rest = internationaal_artikelen[1:] %}
+<div class="twee-kolom">
+  <div class="kolom-links">{% if int_top %}{{ render_feature(int_top[0]) }}{% endif %}</div>
+  <div class="kolom-rechts">{% for a in int_rest %}{{ render_compact(a) }}{% endfor %}</div>
 </div>
 {% endif %}
 
-{# ================================================================
-   SECTIE: MARKTEN (NIEUWE PAGINA)
-================================================================ #}
-{% if aandelen %}
-<div class="markten-sectie">
-  <div class="sectie-label sectie-label-donker">&#9670; Markten &amp; Koersen</div>
-
-  <div class="markten-tabel-wrapper">
-    <table class="markten-tabel">
-      <thead>
-        <tr>
-          <th>Aandeel</th>
-          <th class="num">Prijs</th>
-          <th class="num">Dag-wijziging</th>
-          <th class="num">%</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in aandelen %}
-        <tr>
-          <td>
-            <div class="markten-ticker">{{ a.ticker }}</div>
-            <div class="markten-naam">{{ a.naam }}</div>
-          </td>
-          <td class="num markten-prijs">{{ a.prijs }}</td>
-          <td class="num">
-            <span class="markten-wijziging {{ a.kleur }}">
-              {{ pijl(a.kleur) }}
-              {%- if a.wijziging is not none -%}
-                {%- if a.wijziging > 0 -%}+{%- endif -%}
-                {{ a.wijziging | round(2) }}
-              {%- endif -%}
-            </span>
-          </td>
-          <td class="num">
-            <span class="markten-wijziging {{ a.kleur }}">{{ a.wijziging_pct }}</span>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="ornament-lijn">— ✦ —</div>
-
+{# ---- MARKTEN ---- #}
+<div class="markten-wrapper">
+  <div class="sectie-header"><span class="sectie-label">Markten</span><div class="sectie-lijn"></div></div>
+  {% if markt_commentaar %}
+  <div class="markten-commentaar">{{ markt_commentaar }}</div>
+  {% endif %}
+  <table class="markten-tabel">
+    <thead>
+      <tr>
+        <th>Naam</th><th>Ticker</th>
+        <th style="text-align:right;padding-right:16px">Koers</th>
+        <th style="text-align:right;padding-right:16px">Dag</th>
+        <th>Context</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in aandelen %}
+      <tr class="{{ a.kleur }}">
+        <td class="naam-cel">{{ a.naam }}</td>
+        <td class="ticker-cel">{{ a.ticker }}</td>
+        <td class="prijs-cel">{{ a.prijs }}</td>
+        <td class="wijziging-cel">{{ pijl(a.kleur) }} {{ a.wijziging_pct }}</td>
+        <td class="context-cel">{{ a.afstand_hoog if a.afstand_hoog is defined else '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
-{% endif %}
-
-{# ================================================================
-   FOOTER
-================================================================ #}
-<footer class="footer">
-  <div class="footer-left">
-    Automatisch gegenereerd door NieuwsAgent<br />
-    Artikelen samengevat met AI — geen redactionele verantwoordelijkheid
-  </div>
-  <div class="footer-center">
-    De NieuwsAgent<br />
-    <span style="font-size: 6.5pt; font-family: Arial, sans-serif; color: #8090a8; font-weight: normal;">{{ datum }}</span>
-  </div>
-  <div class="footer-right">
-    {{ editie }} Editie<br />
-    Alle tijden zijn lokaal (CET)
-  </div>
-</footer>
 
 </body>
 </html>
