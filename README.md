@@ -59,6 +59,8 @@ Ollama draait het lokale AI-model (Qwen2.5:3b) voor samenvatten en vertalen.
 5. Klik op **App-wachtwoord maken**
 6. Geef het een naam: bijv. `NieuwsAgent`
 7. Kopieer het **16-karakter wachtwoord** (formaat: `xxxx xxxx xxxx xxxx`)
+Ik heb het wachtwoord gekopierd en het is aofl aeoo mmee edui
+
 
 > Bewaar dit wachtwoord — je ziet het maar één keer!
 
