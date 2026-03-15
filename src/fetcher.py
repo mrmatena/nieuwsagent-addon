@@ -24,11 +24,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 RSS_SOURCES = [
-    # Tech (80% gewicht)
+    # Tech (80% gewicht) — alleen Nederlandse bronnen
     {"url": "https://feeds.tweakers.net/nieuws/top.rss", "categorie": "tech", "taal": "nl", "naam": "Tweakers"},
-    {"url": "https://www.theverge.com/rss/index.xml", "categorie": "tech", "taal": "en", "naam": "The Verge"},
-    {"url": "https://www.engadget.com/rss.xml", "categorie": "tech", "taal": "en", "naam": "Engadget"},
-    {"url": "https://feeds.macrumors.com/MacRumors-All", "categorie": "tech", "taal": "en", "naam": "MacRumors"},
+    {"url": "https://www.bright.nl/feeds/rss", "categorie": "tech", "taal": "nl", "naam": "Bright"},
     # Nationaal (10% gewicht)
     {"url": "https://feeds.nos.nl/nosnieuwsalgemeen", "categorie": "nationaal", "taal": "nl", "naam": "NOS"},
     {"url": "https://www.nu.nl/rss/Algemeen", "categorie": "nationaal", "taal": "nl", "naam": "Nu.nl"},
@@ -335,9 +333,22 @@ def haal_alles_op() -> list[dict]:
         artikel["volledige_tekst"] = scrape_data.get("volledige_tekst", "")
         artikel["afbeelding_pad"] = scrape_data.get("afbeelding_pad", None)
 
-        # Vul afbeelding_url in vanuit scrape als RSS er geen had
-        if not artikel.get("afbeelding_url") and artikel["afbeelding_pad"]:
-            # Laat afbeelding_url staan op None; het pad is al beschikbaar
-            pass
+    # Dedupliceer afbeeldingen op pad én op URL — elk plaatje mag maar één keer voorkomen
+    gebruikte_afbeelding_paden: set[str] = set()
+    gebruikte_afbeelding_urls: set[str] = set()
+    for artikel in alle_artikelen:
+        pad = artikel.get("afbeelding_pad")
+        url = artikel.get("afbeelding_url")
+        if pad and pad in gebruikte_afbeelding_paden:
+            artikel["afbeelding_pad"] = None
+            logger.debug("Dubbel afbeeldingspad verwijderd voor '%s'", artikel.get("titel", ""))
+        elif url and url in gebruikte_afbeelding_urls:
+            artikel["afbeelding_pad"] = None
+            logger.debug("Dubbele afbeeldings-URL verwijderd voor '%s'", artikel.get("titel", ""))
+        else:
+            if pad:
+                gebruikte_afbeelding_paden.add(pad)
+            if url:
+                gebruikte_afbeelding_urls.add(url)
 
     return alle_artikelen
