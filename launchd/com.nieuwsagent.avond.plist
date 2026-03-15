@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.nieuwsagent.avond</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/martijnmatena/Projects/NieuwsAgent/src/main.py</string>
+        <string>Avond</string>
+    </array>
+
+    <!-- Elke dag om 17:00 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>17</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Logbestanden -->
+    <key>StandardOutPath</key>
+    <string>/Users/martijnmatena/Library/Logs/nieuwsagent.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/martijnmatena/Library/Logs/nieuwsagent.log</string>
+
+    <!-- Herstart bij crash -->
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>

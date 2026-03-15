@@ -1,0 +1,7 @@
+{
+  "gmail_address": "jouw@gmail.com",
+  "gmail_app_password": "xxxx xxxx xxxx xxxx",
+  "ontvanger_email": "jouw@gmail.com",
+  "ollama_url": "http://localhost:11434",
+  "ollama_model": "qwen2.5:14b"
+}
