@@ -91,6 +91,8 @@ def maak_aandeel_dict(ticker: str, naam: str, info: dict) -> dict:
     """
     prijs_raw: float = info.get("prijs", 0.0) or 0.0
     wijziging_raw: float = info.get("wijziging", 0.0) or 0.0
+    hoog_52w_raw: float = info.get("hoog_52w", 0.0) or 0.0
+    laag_52w_raw: float = info.get("laag_52w", 0.0) or 0.0
 
     prijs_str = f"${prijs_raw:,.2f}"
 
@@ -104,6 +106,11 @@ def maak_aandeel_dict(ticker: str, naam: str, info: dict) -> dict:
     else:
         kleur = "grijs"
 
+    afstand_hoog = ""
+    if hoog_52w_raw and prijs_raw:
+        pct = ((prijs_raw - hoog_52w_raw) / hoog_52w_raw) * 100
+        afstand_hoog = f"{pct:+.0f}% v. 52w hoog"
+
     return {
         "ticker": ticker,
         "naam": naam,
@@ -111,6 +118,9 @@ def maak_aandeel_dict(ticker: str, naam: str, info: dict) -> dict:
         "wijziging": round(wijziging_raw, 4),
         "wijziging_pct": wijziging_pct_str,
         "kleur": kleur,
+        "hoog_52w": f"${hoog_52w_raw:,.2f}" if hoog_52w_raw else "–",
+        "laag_52w": f"${laag_52w_raw:,.2f}" if laag_52w_raw else "–",
+        "afstand_hoog": afstand_hoog,
     }
 
 
@@ -170,6 +180,16 @@ def _haal_ticker_info_op(ticker: str) -> Optional[dict]:
 
             result_container["prijs"] = prijs
             result_container["wijziging"] = wijziging if wijziging is not None else 0.0
+
+            # 52-weeks hoog/laag
+            try:
+                result_container["hoog_52w"] = float(fast.year_high)
+            except (AttributeError, TypeError, ValueError):
+                result_container["hoog_52w"] = 0.0
+            try:
+                result_container["laag_52w"] = float(fast.year_low)
+            except (AttributeError, TypeError, ValueError):
+                result_container["laag_52w"] = 0.0
 
         except Exception as exc:
             error_container["exc"] = exc
