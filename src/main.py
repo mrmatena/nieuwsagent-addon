@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from config import load_config
 from fetcher import haal_alles_op
-from ai_processor import verwerk_artikelen
+from ai_processor import verwerk_artikelen, genereer_markt_commentaar
 from stock_fetcher import haal_aandelen_op
 from pdf_generator import genereer_pdf
 from emailer import stuur_email
@@ -73,6 +73,14 @@ def genereer_en_stuur(editie: str) -> None:
     aandelen = haal_aandelen_op()
     logger.info(f"  → {len(aandelen)} aandelen opgehaald")
 
+    logger.info("Stap 3b: Marktcommentaar genereren...")
+    try:
+        markt_commentaar = genereer_markt_commentaar(aandelen, config)
+        logger.info(f"  → Marktcommentaar: {len(markt_commentaar)} tekens")
+    except Exception as e:
+        logger.warning(f"Marktcommentaar mislukt: {e}")
+        markt_commentaar = ""
+
     # Stap 4: PDF genereren
     logger.info("Stap 4/5: PDF genereren...")
     template_data = {
@@ -82,6 +90,7 @@ def genereer_en_stuur(editie: str) -> None:
         "nationaal_artikelen": geselecteerd.get("nationaal", []),
         "internationaal_artikelen": geselecteerd.get("internationaal", []),
         "aandelen": aandelen,
+        "markt_commentaar": markt_commentaar,
     }
     try:
         pdf_bytes = genereer_pdf(template_data)
