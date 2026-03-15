@@ -1,0 +1,26 @@
+name: "NieuwsAgent"
+description: "Dagelijkse AI-gegenereerde nieuwskrant als PDF per email"
+version: "1.0.0"
+slug: "nieuwsagent"
+init: false
+arch:
+  - amd64
+options:
+  gmail_address: ""
+  gmail_app_password: ""
+  ontvanger_email: ""
+  ollama_url: "http://homeassistant:11434"
+  ollama_model: "qwen2.5:3b"
+  tijdstip_ochtend: "06:00"
+  tijdstip_avond: "17:00"
+schema:
+  gmail_address: str
+  gmail_app_password: str
+  ontvanger_email: str
+  ollama_url: str
+  ollama_model: str
+  tijdstip_ochtend: str
+  tijdstip_avond: str
+map:
+  - share:rw
+startup: application
