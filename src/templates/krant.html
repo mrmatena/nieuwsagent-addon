@@ -89,50 +89,53 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 1
 .grijs .ticker-pct { color: #9ca3af; }
 
 /* SECTIE HEADER */
-.sectie-header { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; }
-.sectie-label { font-size: 7pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #E8002D; white-space: nowrap; }
+.sectie-header { display: flex; align-items: center; margin: 12px 0 8px; }
+.sectie-label { font-size: 7pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #E8002D; white-space: nowrap; margin-right: 10px; }
 .sectie-lijn { flex: 1; height: 1px; background: #ddd; }
 
 /* FOTO */
-.foto-wrapper { width: 100%; overflow: hidden; margin-bottom: 9px; }
-.foto-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.foto-placeholder { background: #1a1a2e; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 9px; }
-.ph-label { font-size: 8pt; font-weight: 900; letter-spacing: 3px; color: rgba(255,255,255,0.25); text-transform: uppercase; }
+.foto-wrapper { width: 100%; margin-bottom: 9px; }
+.foto-wrapper img { width: 100%; display: block; }
+.foto-placeholder { background: #1a1a2e; width: 100%; margin-bottom: 9px; }
+.ph-label { font-size: 8pt; font-weight: 900; letter-spacing: 3px; color: #444; text-transform: uppercase; display: block; padding: 8px; }
 
 /* HERO */
 .artikel-hero { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee; }
 .hero-titel { font-size: 22pt; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 8px; color: #0a0a0a; }
-.pull-quote { display: flex; align-items: flex-start; gap: 10px; margin: 9px 0; }
-.pq-lijn { width: 3px; min-height: 36px; background: #E8002D; flex-shrink: 0; }
+.pull-quote { display: flex; align-items: flex-start; margin: 9px 0; }
+.pq-lijn { width: 3px; min-height: 36px; background: #E8002D; flex-shrink: 0; margin-right: 10px; }
 .pq-tekst { font-size: 13pt; font-style: italic; color: #222; line-height: 1.35; }
 .hero-tekst { font-size: 10pt; line-height: 1.55; color: #333; margin-bottom: 7px; }
 
 /* FEATURE */
-.feature-rij { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-.artikel-feature { flex: 1 1 45%; min-width: 200px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+.feature-rij { display: flex; margin-bottom: 12px; }
+.artikel-feature { width: 49%; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-right: 2%; }
+.artikel-feature:last-child { margin-right: 0; }
 .feature-titel { font-size: 13pt; font-weight: 900; line-height: 1.2; margin-bottom: 6px; color: #0a0a0a; }
 .feature-tekst { font-size: 9pt; line-height: 1.5; color: #444; margin-bottom: 6px; }
 
 /* COMPACT */
-.compact-rij { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-.artikel-compact { flex: 1 1 30%; min-width: 150px; display: flex; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.compact-rij { display: flex; flex-wrap: wrap; margin-bottom: 12px; }
+.artikel-compact { width: 31%; margin-right: 2%; margin-bottom: 10px; display: flex; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.artikel-compact:nth-child(3n) { margin-right: 0; }
 .compact-content { flex: 1; }
-.compact-thumb { width: 68px; flex-shrink: 0; }
-.compact-thumb img { width: 68px; height: 68px; object-fit: cover; display: block; }
+.compact-thumb { width: 68px; flex-shrink: 0; margin-left: 8px; }
+.compact-thumb img { width: 68px; height: 68px; display: block; }
 .compact-titel { font-size: 10pt; font-weight: 800; line-height: 1.2; margin-bottom: 4px; color: #0a0a0a; }
 .compact-tekst { font-size: 8pt; line-height: 1.45; color: #555; margin-bottom: 4px; }
 
 /* GEDEELD */
 .art-cat { font-size: 6.5pt; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #E8002D; margin-bottom: 4px; }
-.bron-badge { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-.bron-naam { font-size: 7pt; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
-.bron-tijd { font-size: 7pt; color: #bbb; }
+.bron-badge { display: flex; align-items: center; margin-top: 4px; }
+.bron-naam { font-size: 7pt; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px; }
+.bron-tijd { font-size: 7pt; color: #bbb; margin-right: 8px; }
 .bron-score { font-size: 7pt; font-weight: 700; color: #E8002D; background: #fff5f5; padding: 1px 4px; }
 
 /* TWEE KOLOM */
-.twee-kolom { display: flex; gap: 14px; margin-bottom: 12px; }
-.kolom-links { flex: 1.2; }
-.kolom-rechts { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.twee-kolom { display: flex; margin-bottom: 12px; }
+.kolom-links { width: 55%; margin-right: 3%; }
+.kolom-rechts { width: 42%; display: flex; flex-direction: column; }
+.kolom-rechts .artikel-compact { width: 100%; margin-right: 0; margin-bottom: 8px; }
 
 /* MARKTEN */
 .markten-wrapper { page-break-before: always; padding-top: 8px; }
@@ -196,7 +199,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 1
 {% set nat_rest = nationaal_artikelen[1:] %}
 <div class="twee-kolom">
   <div class="kolom-links">{% if nat_top %}{{ render_feature(nat_top[0]) }}{% endif %}</div>
-  <div class="kolom-rechts">{% for a in nat_rest %}{{ render_compact(a) }}{% endfor %}</div>
+  <div class="kolom-rechts" style="width:42%">{% for a in nat_rest %}{{ render_compact(a) }}{% endfor %}</div>
 </div>
 
 {# ---- INTERNATIONAAL ---- #}
@@ -206,7 +209,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 1
 {% set int_rest = internationaal_artikelen[1:] %}
 <div class="twee-kolom">
   <div class="kolom-links">{% if int_top %}{{ render_feature(int_top[0]) }}{% endif %}</div>
-  <div class="kolom-rechts">{% for a in int_rest %}{{ render_compact(a) }}{% endfor %}</div>
+  <div class="kolom-rechts" style="width:42%">{% for a in int_rest %}{{ render_compact(a) }}{% endfor %}</div>
 </div>
 {% endif %}
 

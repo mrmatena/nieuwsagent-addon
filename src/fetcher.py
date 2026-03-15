@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 RSS_SOURCES = [
     # Tech (80% gewicht) — alleen Nederlandse bronnen
     {"url": "https://feeds.tweakers.net/nieuws/top.rss", "categorie": "tech", "taal": "nl", "naam": "Tweakers"},
-    {"url": "https://www.bright.nl/feeds/rss", "categorie": "tech", "taal": "nl", "naam": "Bright"},
+    {"url": "https://www.bright.nl/feed/news.xml", "categorie": "tech", "taal": "nl", "naam": "Bright"},
     # Nationaal (10% gewicht)
     {"url": "https://feeds.nos.nl/nosnieuwsalgemeen", "categorie": "nationaal", "taal": "nl", "naam": "NOS"},
     {"url": "https://www.nu.nl/rss/Algemeen", "categorie": "nationaal", "taal": "nl", "naam": "Nu.nl"},
